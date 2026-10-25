@@ -180,6 +180,7 @@
     .sticker{max-width:150px;max-height:150px;object-fit:contain}
 
     /* iPhone / 移动端全面适配 */
+    /* ================= 移动端全面适配 ================= */
     @media(max-width: 700px) {
       .app{display:block;height:100vh;height:100dvh;overflow:hidden;}
       .side{display:none}
@@ -210,44 +211,40 @@
       .profile-hero{grid-template-columns:88px minmax(0,1fr);gap:12px;padding-bottom:16px}
       .profile-cover{height:120px}
       
-      /* 聊天界面全屏沉浸 */
-      body.chat-open .main{
-        position: fixed; inset: 0; width: 100%; height: 100vh; height: 100dvh;
-        padding: 0; margin: 0; background: var(--paper); z-index: 100;
-        display: flex; flex-direction: column; overflow: hidden;
+      /* 关键修复：除首页外，所有子页面全屏独占 */
+      body:not(.show-home) .main {
+        padding: 0; overflow: hidden; position: relative;
       }
+      body:not(.show-home) .topline {
+        display: flex; padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+        background: #fff; z-index: 10; border-bottom: 1px solid var(--line);
+        margin: 0; position: absolute; top: 0; left: 0; width: 100%;
+      }
+      body:not(.show-home) .page.active {
+        padding-top: calc(env(safe-area-inset-top) + 56px); 
+        height: 100vh; height: 100dvh; overflow-y: auto;
+        padding-left: 16px; padding-right: 16px; padding-bottom: 20px;
+        background: var(--paper);
+      }
+      
+      /* 特殊处理聊天界面，让聊天记录区高度自适应并且输入框贴底 */
+      body.chat-open .main { padding: 0; }
       body.chat-open .topline { display: none; }
-      body.chat-open #page-chat { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden;}
-      
-      .chat-shell{border:0; margin:0; border-radius:0; height:100%; background:#fff;}
-      .chat-head{flex:0 0 auto; min-height:58px; padding:calc(env(safe-area-inset-top) + 8px) 12px 8px; gap:8px; border-bottom:1px solid var(--line);}
-      .chat-head .grow {overflow:hidden;}
-      .chat-head strong {display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-      .chat-back{font-size:20px; min-width:32px; padding:4px 7px;}
-      
-      .chat-log{
-        flex: 1 1 auto; width: 100%; min-height: 0; max-height: none; 
-        height: auto; overflow-y: auto; padding: 16px 12px 20px; gap: 13px; 
-        overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-      }
-      .msg { max-width: 88%; }
-      
-      .chat-compose{
-        flex: 0 0 auto; padding: 10px 10px calc(9px + env(safe-area-inset-bottom)); 
-        background: #fff; align-items: center;
-      }
-      .chat-compose input { min-width: 0; height: 42px; border-radius: 22px; padding: 0 14px; font-size: 16px !important; }
-      
+      body.chat-open #page-chat { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+      body.chat-open .chat-shell { border: 0; margin: 0; border-radius: 0; height: 100%; flex: 1; }
+      body.chat-open .chat-head { flex: 0 0 auto; padding-top: calc(env(safe-area-inset-top) + 8px); }
+      body.chat-open .chat-log { flex: 1 1 auto; max-height: none; min-height: 0; overflow-y: auto; padding-bottom: 20px; }
+      body.chat-open .chat-compose { flex: 0 0 auto; padding-bottom: calc(env(safe-area-inset-bottom) + 10px); }
+
       /* 解决 iOS 自动放大问题 */
-      input, textarea, select, .search { font-size: 16px !important; }
-      
-      .modal-backdrop{padding: 0; padding-bottom: env(safe-area-inset-bottom); align-items:flex-end;}
-      .modal{width:100%; max-width:none; max-height:85dvh; border-radius:16px 16px 0 0;}
+      input, textarea, select, .search, .chat-compose input { font-size: 16px !important; }
+      .modal-backdrop{ padding:0; padding-bottom:env(safe-area-inset-bottom); align-items:flex-end; }
+      .modal{ width:100%; max-width:none; max-height:85dvh; border-radius:16px 16px 0 0; }
     }
     @media (min-width: 701px) { .chat-back { display: none; } }
   </style>
 </head>
-<body>
+<body class="show-home">
 <div class="app">
   <aside class="side">
     <div class="eyebrow">PERSONAL ARCHIVE / 001</div>
@@ -459,6 +456,8 @@
     $$('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+page));
     $$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
     document.body.classList.toggle('chat-open',page==='chat');
+    document.body.classList.toggle('show-home',page==='home'); // 新增：区分首页和子页面
+    // ... 后面不变 ...
     const names={home:'HOME',chat:'MESSAGES',letters:'LETTERS',diary:'DIARY',profile:'PROFILES',cards:'CARD ARCHIVE',settings:'PREFERENCES'};
     $('#crumb').textContent = 'PERSONAL ARCHIVE / ' + (names[page]||page).toUpperCase();
     
