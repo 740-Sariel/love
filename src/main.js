@@ -20,6 +20,10 @@ const DEFAULTS = {
     stickers: true,     // 表情包开关
     partnerName: 'Nova',
     partnerTag: 'ENFP · 火象狮子',
+    replyDelayMin: 0, replyDelayMax: 0,   // 秒，0~300
+proactive: false,                    // 主动发消息开关
+proactiveEvery: 0,                   // 分钟，0~300（0~5h）
+readNoReply: false,                  // 已读不回
   },
   // 字卡库：对方说的话全部出自这里
   cards: [
@@ -86,6 +90,8 @@ const DEFAULTS = {
   nextStatusIn: 0,         // 距下次状态检查的间隔 ms（1~8h）
   lastCallCheck: 0,
   nextCallIn: 0,           // 15~60min
+  lastProactiveCheck: 0,
+  nextProactiveIn: 0,
   welcomed: false,
 };
 
@@ -216,8 +222,19 @@ function drawStickerIdx() {
   return n ? Math.floor(rnd() * n) : -1;
 }
 
-async function novaReply() {
-  await delay(randBetween(700, 1800));   // 对方“正在输入”
+async function novaReply() 
+if (state.settings.readNoReply && rnd() < 0.35) {
+  await delay(randBetween(800, 1500));
+  showTyping();
+  await delay(randBetween(1500, 3500));
+  hideTyping();
+  pushMessage({ from: 'sys', text: '对方已读，但没有回复' });
+  return;
+}
+{
+  const lo = state.settings.replyDelayMin * 1000;
+const hi = state.settings.replyDelayMax * 1000;
+await delay(hi > lo ? randBetween(lo, hi) : 700);;   // 对方“正在输入”
   showTyping();
 
   if (rnd() < 0.03) {                    // ② 拍一拍
@@ -362,7 +379,7 @@ function callTick() {
   save();
   if (rnd() < 0.25) incomingCall();
 }
-
+          
 function startRing() {
   stopRing();
   ringAudio = new Audio('https://music.163.com/song/media/outer/url?id=40249284.mp3');
