@@ -5,21 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Letter from Spring</title>
     
-    <!-- 图标配置 (请确保同目录下有 icon.png) -->
+    <!-- ====== 图标配置 (请确保你的 icon.png 和网页在同一目录) ====== -->
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="manifest" href='data:application/manifest+json,{"name":"Spring","short_name":"Spring","start_url":"/","display":"standalone","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"}]}'>
+    <!-- ====================== -->
 
     <style>
-        /* ========== 基础与色彩 ========== */
+        /* ========== 基础与色彩 (清新文艺风) ========== */
         :root {
             --bg-color: #fbfbfb;
-            --primary-color: #a3b899;
+            --primary-color: #a3b899; /* 浅草绿 */
             --text-color: #333333;
             --text-light: #888888;
             --line-color: #e0e0e0;
             --msg-bg-other: #f2f4f1;
             --msg-bg-me: #dce6d5;
+            --avatar-size: 32px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang SC', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
@@ -34,6 +36,7 @@
             color: var(--text-color);
         }
 
+        /* 手机屏幕容器 (9:16 适配) */
         #app {
             width: 100vw;
             height: 100vh;
@@ -54,16 +57,19 @@
             border-bottom: 1px solid var(--line-color);
             background: #fff;
             z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            position: relative;
         }
-        header h1 { font-size: 16px; font-weight: normal; letter-spacing: 1px; margin: 0 auto; }
+        header h1 { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
         header h1 span { color: var(--primary-color); }
-        .header-left, .header-right { width: 30px; text-align: left; font-size: 20px; cursor: pointer; }
-        .header-right { text-align: right; }
-        
-        #status-bar { font-size: 11px; color: var(--primary-color); text-align: center; padding: 5px; background: #fff; border-bottom: 1px solid var(--line-color); display: none; }
+        .header-sub { font-size: 11px; color: var(--text-light); margin-top: 5px; }
+        .settings-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 20px;
+            color: var(--text-light);
+            cursor: pointer;
+        }
 
         /* ========== 聊天记录区 ========== */
         #chat-container {
@@ -72,64 +78,87 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 15px; /* 增加一点点间距更透气 */
             scroll-behavior: smooth;
         }
 
+        /* 全局居中卡片 (用于系统提示、封面语) */
+        .divider-card {
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin: 10px 0;
+            padding: 0 10px;
+        }
+        .divider-card .highlight { color: var(--primary-color); font-size: 14px; letter-spacing: 1px; }
+
+        /* 消息行结构 */
         .message-row {
             display: flex;
-            width: 100%;
             align-items: flex-start;
-            gap: 10px;
+            max-width: 85%;
+            gap: 8px;
         }
-        .message-row.me { flex-direction: row-reverse; }
-        
+        .message-row.other { align-self: flex-start; }
+        .message-row.me { align-self: flex-end; flex-direction: row-reverse; }
+
+        /* 头像 (使用 CSS 绘制默认图形，绝不裂图) */
         .avatar {
-            width: 36px;
-            height: 36px;
+            width: var(--avatar-size);
+            height: var(--avatar-size);
             border-radius: 50%;
-            background-color: #e0e0e0;
+            background-color: var(--primary-color);
+            background-size: cover;
+            background-position: center;
             flex-shrink: 0;
-            object-fit: cover;
-            border: 1px solid var(--line-color);
+            border: 1px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            /* 默认背景为浅绿，如果是图片链接会覆盖 */
+        }
+        /* 默认自己头像：纯白底色带个深色小圆点 */
+        .avatar.me { 
+            background-color: #e5e5e5; 
+            position: relative;
+        }
+        .avatar.me::after {
+            content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 12px; height: 12px; border-radius: 50%; background: #999;
         }
 
-        .msg-content {
-            max-width: 75%;
+        /* 消息内容 */
+        .message-content {
             display: flex;
             flex-direction: column;
         }
-        .message-row.me .msg-content { align-items: flex-end; }
+        .message-row.other .message-content { align-items: flex-start; }
+        .message-row.me .message-content { align-items: flex-end; }
 
+        /* 昵称 */
+        .nickname {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+
+        /* 气泡 */
         .msg-bubble {
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 14px;
             line-height: 1.5;
             word-wrap: break-word;
-            position: relative;
+            max-width: 100%;
         }
         .message-row.other .msg-bubble { background: var(--msg-bg-other); border-top-left-radius: 2px; }
         .message-row.me .msg-bubble { background: var(--msg-bg-me); border-top-right-radius: 2px; }
 
-        .msg-time { font-size: 10px; color: var(--text-light); margin-top: 4px; }
+        .msg-time { font-size: 10px; color: var(--text-light); margin-top: 4px; padding: 0 4px; }
 
         /* 拍一拍特效 */
-        .pat-text { font-size: 12px; color: var(--text-light); text-align: center; width: 100%; margin: 5px 0; font-style: italic; }
-
-        /* 卡片式分割线 */
-        .divider-card {
-            border: 1px solid var(--line-color);
-            border-radius: 4px;
-            padding: 15px;
-            margin: 10px 0;
-            background: #fff;
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-light);
-            line-height: 1.6;
-        }
-        .divider-card .highlight { color: var(--primary-color); }
+        .pat-text { font-size: 12px; color: var(--text-light); text-align: center; width: 100%; margin: 10px 0; font-style: italic; }
 
         /* ========== 底部输入区 ========== */
         footer {
@@ -161,52 +190,64 @@
         .action-btns { display: flex; gap: 8px; }
         .action-btns button { background: #fff; border: 1px solid var(--line-color); color: var(--text-light); padding: 8px 10px; }
 
-        /* ========== 弹窗面板通用 ========== */
-        .panel {
+        /* ========== 设置面板 ========== */
+        #settings-panel {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color);
+            background: rgba(255,255,255,0.98);
             z-index: 100;
             display: none;
             flex-direction: column;
+            padding: 20px;
             overflow-y: auto;
         }
-        .panel.active { display: flex; }
-        .panel-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; border-bottom: 1px solid var(--line-color); background: #fff; position: sticky; top: 0; z-index: 2;
-        }
-        .panel-header h2 { font-size: 16px; font-weight: normal; }
-        .panel-body { padding: 15px; }
+        #settings-panel.active { display: flex; }
+        
+        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--line-color); padding-bottom: 10px;}
+        .settings-header h2 { font-size: 18px; font-weight: normal; }
+        .settings-header .close-btn { font-size: 24px; color: var(--text-light); cursor: pointer; }
 
-        /* 设置项样式 */
+        /* 标签页 */
+        .tabs { display: flex; gap: 15px; margin-bottom: 15px; }
+        .tab { padding: 5px 10px; font-size: 14px; color: var(--text-light); cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         .setting-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 0; border-bottom: 1px dashed var(--line-color); font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px dashed var(--line-color);
+            font-size: 14px;
         }
+        
+        /* 输入框和文本域 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 5px; }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--line-color);
+            border-radius: 4px;
+            font-size: 13px;
+            background: var(--bg-color);
+            outline: none;
+        }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        .save-btn { width: 100%; padding: 12px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer;}
+
+        /* 开关样式 */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
-        
-        /* 按钮样式 */
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; text-align: center; font-size: 14px; }
-        .btn-primary { background: var(--primary-color); color: #fff; border: none; }
 
-        /* 文本域 */
-        textarea {
-            width: 100%; padding: 10px; border: 1px solid var(--line-color); border-radius: 4px;
-            font-size: 14px; font-family: inherit; resize: vertical; min-height: 150px; margin-top: 10px;
-        }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--line-color); border-radius: 4px; }
-
-        /* 隐藏音频 */
         #bg-audio { display: none; }
+        #status-bar { font-size: 11px; color: var(--primary-color); text-align: center; padding: 5px; background: #fff; border-bottom: 1px solid var(--line-color); display: none; }
     </style>
 </head>
 <body>
@@ -214,25 +255,15 @@
 <div id="app">
     <!-- 顶部 -->
     <header>
-        <div class="header-left" onclick="togglePanel('panel-cards')" title="字卡库">📚</div>
         <h1>- Letter from <span>Spring</span> -</h1>
-        <div class="header-right" onclick="togglePanel('panel-settings')" title="设置">⚙️</div>
+        <div class="header-sub" id="header-sub-text">人的一生，会有太多个雨季</div>
+        <div class="settings-btn" onclick="toggleSettings()">⚙️</div>
     </header>
     <div id="status-bar"></div>
 
     <!-- 聊天区 -->
     <div id="chat-container">
-        <!-- 初始卡片 (头像随资料变动) -->
-        <div class="divider-card">
-            <div class="highlight">- Letter from Spring -</div>
-            <div style="margin-top: 10px;" id="initial-profile">>>Nova·17·ENFP·火象狮子</div>
-            <div style="margin-top: 15px; font-size: 12px; border-left: 2px solid var(--primary-color); padding-left: 8px; text-align: left;">
-                J:<br>
-                一度ほどけた糸は<br>
-                どんなに必死に戻そうとしても<br>
-                元のように結び直すことは困難である
-            </div>
-        </div>
+        <!-- 渲染区 (由 JS 动态生成) -->
     </div>
 
     <!-- 底部 -->
@@ -245,30 +276,21 @@
         <button onclick="sendMessage()">发送</button>
     </footer>
 
-    <!-- ================= 设置面板 ================= -->
-    <div id="panel-settings" class="panel">
-        <div class="panel-header">
-            <span style="width:20px;"></span>
-            <h2>设置</h2>
-            <span style="cursor:pointer; font-size: 20px;" onclick="togglePanel('panel-settings')">×</span>
+    <!-- 设置面板 -->
+    <div id="settings-panel">
+        <div class="settings-header">
+            <h2>设置与管理</h2>
+            <div class="close-btn" onclick="toggleSettings()">×</div>
         </div>
-        <div class="panel-body">
-            <!-- 资料设置 -->
-            <h3 style="font-size: 15px; margin-bottom: 10px; color: var(--primary-color);">对方资料</h3>
-            <div class="form-group">
-                <label>名字 / 简介</label>
-                <input type="text" id="edit-profile-text" value="Nova·17·ENFP·火象狮子">
-            </div>
-            <div class="form-group">
-                <label>头像图片链接 (URL)</label>
-                <input type="text" id="edit-avatar-url" value="https://api.iconify.design/noto:leaf-fluttering-in-wind.svg" placeholder="输入图片URL (http...)">
-            </div>
-            <div class="btn-group" style="margin-bottom: 20px;">
-                <div class="btn btn-primary" onclick="saveProfile()">保存资料</div>
-            </div>
 
-            <!-- 系统设置 -->
-            <h3 style="font-size: 15px; margin-bottom: 10px; color: var(--primary-color); border-top: 1px dashed #eee; padding-top: 15px;">系统设置</h3>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('tab-system', this)">系统设置</div>
+            <div class="tab" onclick="switchTab('tab-profile', this)">角色资料</div>
+            <div class="tab" onclick="switchTab('tab-cards', this)">字卡库</div>
+        </div>
+
+        <!-- 系统设置 -->
+        <div id="tab-system" class="tab-content active">
             <div class="setting-item">
                 <span>后台挂活 (音频)</span>
                 <label class="switch">
@@ -286,35 +308,48 @@
             <div class="setting-item">
                 <span>混合模式 (Emoji与文字拼接)</span>
                 <label class="switch">
-                    <input type="checkbox" id="toggle-mixed-emoji" checked onchange="config.isMixedMode = this.checked">
+                    <input type="checkbox" id="toggle-mixed-emoji" checked>
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="setting-item">
-                <span>数据备份与恢复</span>
-                <div style="display:flex; gap:10px;">
-                    <div class="btn" style="padding:5px 10px; font-size:12px;" onclick="backupData()">导出</div>
+            <div class="form-group" style="margin-top: 20px;">
+                <label>数据备份与恢复</label>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="backupData()" style="flex:1; padding:10px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;">导出备份</button>
                     <input type="file" id="restore-file" accept=".json" onchange="restoreData(event)" style="display: none;">
-                    <div class="btn" style="padding:5px 10px; font-size:12px;" onclick="document.getElementById('restore-file').click()">导入</div>
+                    <button onclick="document.getElementById('restore-file').click()" style="flex:1; padding:10px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;">导入备份</button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ================= 字卡库管理面板 ================= -->
-    <div id="panel-cards" class="panel">
-        <div class="panel-header">
-            <span style="width:20px;"></span>
-            <h2>字卡库管理</h2>
-            <span style="cursor:pointer; font-size: 20px;" onclick="togglePanel('panel-cards')">×</span>
-        </div>
-        <div class="panel-body">
-            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">每行一条，支持纯文本。如果填的是图片链接(http开头)，会自动识别为表情包。</p>
-            <textarea id="card-textarea" placeholder="在这里输入字卡..."></textarea>
-            <div class="btn-group" style="margin-top: 15px;">
-                <div class="btn btn-primary" onclick="saveCards()">保存字卡库</div>
-                <div class="btn" onclick="resetCards()">恢复默认</div>
+        <!-- 角色资料 -->
+        <div id="tab-profile" class="tab-content">
+            <div class="form-group">
+                <label>对方昵称</label>
+                <input type="text" id="profile-nickname" placeholder="Nova">
             </div>
+            <div class="form-group">
+                <label>对方头像图片链接 (留空则使用纯绿默认头像)</label>
+                <input type="text" id="profile-avatar" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>对方状态/签名 (顶部小字)</label>
+                <input type="text" id="profile-status" placeholder="人的一生，会有太多个雨季">
+            </div>
+            <button class="save-btn" onclick="saveProfile()">保存资料</button>
+        </div>
+
+        <!-- 字卡库 -->
+        <div id="tab-cards" class="tab-content">
+            <div class="form-group">
+                <label>字卡句子 (每行一条)</label>
+                <textarea id="textarea-words" placeholder="今天下雨了...&#10;你还好吗？"></textarea>
+            </div>
+            <div class="form-group">
+                <label>表情包图片链接 (每行一个，留空则不发)</label>
+                <textarea id="textarea-stickers" placeholder="https://.../1.png"></textarea>
+            </div>
+            <button class="save-btn" onclick="saveCards()">保存字卡库</button>
         </div>
     </div>
 
@@ -336,91 +371,132 @@
             "晚安，明天也要好好吃饭。"
         ],
         stickerCards: [
-            "https://api.iconify.design/noto:umbrella.svg",
-            "https://api.iconify.design/noto:leaf-fluttering-in-wind.svg"
+            "https://api.iconify.design/noto:umbrella.svg"
         ],
         emojiCards: ["🌱", "🌧️", "🍃", "☕", "💭", "🌙"],
         statusGroups: [
-            { weight: 70, texts: ["正在听歌", "望着窗外发呆", "阅读中", "整理书桌"] },
-            { weight: 30, texts: ["心情有些低落", "在雨中散步", "思考一些事情"] }
+            { weight: 70, texts: ["正在听歌", "望着窗外发呆", "阅读中"] },
+            { weight: 30, texts: ["心情有些低落", "在雨中散步"] }
         ],
-        moods: ["平静", "微郁", "雀跃", "慵懒", "心动"],
+        isMixedMode: true,
         profile: {
-            text: "Nova·17·ENFP·火象狮子",
-            avatarUrl: "https://api.iconify.design/noto:leaf-fluttering-in-wind.svg"
-        },
-        isMixedMode: true
+            nickname: "Nova",
+            avatar: "", // 留空表示用 CSS 绿底
+            headerSub: "人的一生，会有太多个雨季"
+        }
     };
 
-    // 尝试从本地存储加载配置，如果没有则使用默认
-    let config = JSON.parse(localStorage.getItem('spring_config')) || JSON.parse(JSON.stringify(defaultConfig));
+    // 读取本地配置
+    let config = JSON.parse(localStorage.getItem('spring_config')) || defaultConfig;
+    // 读取本地聊天记录
+    let savedChat = localStorage.getItem('spring_chat') || '';
 
-    // 当前用户在字卡库面板编辑的实际数据（拆分字卡和表情）
-    let currentWords = [...config.wordCards];
-    let currentStickers = [...config.stickerCards];
-
-    // ================= 核心逻辑 =================
     const chatContainer = document.getElementById('chat-container');
     const bgAudio = document.getElementById('bg-audio');
 
-    function saveToLocal() {
-        localStorage.setItem('spring_config', JSON.stringify(config));
-    }
-
+    // 获取当前时间
     function getCurrentTime() {
         const now = new Date();
         return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     }
 
+    // 滚动到底部
     function scrollToBottom() {
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // 渲染一条带头像的消息
-    function addMessage(text, type, isHtml = false) {
-        const row = document.createElement('div');
-        row.className = `message-row ${type}`;
-        
-        // 头像
-        const avatar = document.createElement('img');
-        avatar.className = 'avatar';
-        // 如果对方，用 config.profile.avatarUrl。如果是自己，用一个空白或者默认头像
-        avatar.src = type === 'other' ? config.profile.avatarUrl : "https://api.iconify.design/noto:person.svg"; 
-        
-        // 内容容器
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'msg-content';
+    // 保存聊天记录
+    function saveChat() {
+        localStorage.setItem('spring_chat', chatContainer.innerHTML);
+    }
 
-        let bubbleContent = text;
-        if (!isHtml) {
-            bubbleContent = `<div class="msg-bubble">${text}</div>`;
+    // 初始化聊天界面 (重绘)
+    function renderChat() {
+        // 先放一条封面卡片
+        let coverHtml = `
+            <div class="divider-card">
+                <div class="highlight">- Letter from Spring -</div>
+                <div style="margin-top: 8px;">>>${config.profile.nickname}·ENFP·火象狮子</div>
+                <div style="margin-top: 15px; font-size: 12px; border-left: 2px solid var(--primary-color); padding-left: 10px; text-align: left; max-width: 80%; margin-left: auto; margin-right: auto;">
+                    一度ほどけた糸は<br>どんなに必死に戻そうとしても<br>元のように結び直すことは困難である<br>
+                    <span style="color:#aaa; font-size:10px; margin-top:5px; display:inline-block;">(已经解开的线，无论多么拼命地想要复原，也难以像原来那样重新系好)</span>
+                </div>
+            </div>
+            <div class="divider-card"> >> 虐恋风格·温病·引导·剖析 </div>
+        `;
+        
+        // 如果有历史记录，先塞封面，再塞记录
+        if (savedChat) {
+            chatContainer.innerHTML = coverHtml + savedChat;
+        } else {
+            chatContainer.innerHTML = coverHtml;
         }
-        
-        contentDiv.innerHTML = `${bubbleContent}<div class="msg-time">${getCurrentTime()}</div>`;
-        
-        row.appendChild(avatar);
-        row.appendChild(contentDiv);
-        chatContainer.appendChild(row);
         scrollToBottom();
     }
 
+    // 发送用户消息
     function sendMessage() {
         const input = document.getElementById('user-input');
         const text = input.value.trim();
         if (!text) return;
+
         addMessage(text, 'me');
         input.value = '';
-        setTimeout(() => triggerReply(), 1000 + Math.random() * 1500);
+
+        // 模拟回复
+        setTimeout(() => {
+            triggerReply();
+        }, 1000 + Math.random() * 1500);
     }
 
     function handleEnter(e) {
         if (e.key === 'Enter') sendMessage();
     }
 
-    // ================= 概率与随机逻辑 =================
+    // 添加消息到界面
+    function addMessage(text, type, isHtml = false) {
+        const row = document.createElement('div');
+        row.className = `message-row ${type}`;
+        
+        let htmlContent = text;
+        if (!isHtml) {
+            htmlContent = `<div class="msg-bubble">${text}</div>`;
+        }
+
+        // 判断头像
+        let avatarStyle = "";
+        if (type === 'other') {
+            if (config.profile.avatar) {
+                avatarStyle = `background-image: url('${config.profile.avatar}');`;
+            } // 否则使用 CSS 默认绿色
+        } else {
+            avatarStyle = ""; // 自己用 CSS 默认灰色
+        }
+
+        let nickname = type === 'other' ? config.profile.nickname : '我';
+
+        row.innerHTML = `
+            <div class="avatar ${type}" style="${avatarStyle}"></div>
+            <div class="message-content">
+                <div class="nickname">${nickname}</div>
+                ${htmlContent}
+                <div class="msg-time">${getCurrentTime()}</div>
+            </div>
+        `;
+        chatContainer.appendChild(row);
+        scrollToBottom();
+        saveChat(); // 每次发消息都保存
+    }
+
+    // ================= 概率与核心算法 =================
     function triggerPat() {
-        addMessage(`<div class="pat-text">“你” 拍了拍 “${config.profile.text.split('·')[0]}” 的肩膀</div>`, 'other', true);
-        sendNotification(config.profile.text.split('·')[0], "拍了拍你");
+        const div = document.createElement('div');
+        div.className = 'pat-text';
+        div.innerHTML = `“你” 拍了拍 “${config.profile.nickname}” 的肩膀`;
+        chatContainer.appendChild(div);
+        scrollToBottom();
+        saveChat();
+        sendNotification(config.profile.nickname, "拍了拍你");
     }
 
     function triggerReply() {
@@ -430,79 +506,48 @@
         else if (rand < 0.95) count = 2;
         else count = 3;
 
-        updateStatus();
-
         let delay = 0;
         for (let i = 0; i < count; i++) {
-            setTimeout(() => sendCard(), delay);
+            setTimeout(() => {
+                sendCard();
+            }, delay);
             delay += 800 + Math.random() * 500;
         }
     }
 
     function sendCard() {
-        // 如果字卡库为空，不发送
-        if (config.wordCards.length === 0 && config.stickerCards.length === 0) return;
-
-        // 随机决定发文字还是表情包
-        const totalPool = config.wordCards.length + config.stickerCards.length;
-        const randomIndex = Math.floor(Math.random() * totalPool);
-        
-        let textToSend = "";
-        let isSticker = false;
-
-        if (randomIndex < config.wordCards.length) {
-            // 发文字
-            textToSend = config.wordCards[randomIndex];
-        } else {
-            // 发表情
-            textToSend = config.stickerCards[randomIndex - config.wordCards.length];
-            isSticker = true;
-        }
-
-        let finalHtml = textToSend;
+        if (config.wordCards.length === 0) return;
+        const randomSentence = config.wordCards[Math.floor(Math.random() * config.wordCards.length)];
+        let finalText = randomSentence;
         let extraMessage = "";
 
-        // 如果是文字，判断是否加 Emoji
-        if (!isSticker && Math.random() < 0.2 && config.emojiCards.length > 0) {
+        if (Math.random() < 0.2 && config.emojiCards.length > 0) {
             const emoji = config.emojiCards[Math.floor(Math.random() * config.emojiCards.length)];
             if (config.isMixedMode) {
-                if (Math.random() < 0.5) finalHtml = emoji + textToSend;
-                else finalHtml = textToSend + emoji;
+                if (Math.random() < 0.5) finalText = emoji + finalText;
+                else finalText = finalText + emoji;
             } else {
                 extraMessage = emoji;
             }
         }
 
-        // 渲染
-        if (isSticker) {
-            addMessage(`<img src="${textToSend}" style="max-width: 120px; border-radius: 8px; border: 1px solid #eee;">`, 'other', true);
-        } else {
-            addMessage(finalHtml, 'other');
-        }
+        addMessage(finalText, 'other');
 
-        // 附带表情包 (原本独立 20% 概率，这里加了限制：如果刚发完表情，就不再紧跟着发表情，免得刷屏)
-        if (!isSticker && Math.random() < 0.2 && config.stickerCards.length > 0) {
+        if (Math.random() < 0.2 && config.stickerCards.length > 0) {
             const stickerUrl = config.stickerCards[Math.floor(Math.random() * config.stickerCards.length)];
             setTimeout(() => {
-                addMessage(`<img src="${stickerUrl}" style="max-width: 120px; border-radius: 8px; border: 1px solid #eee;">`, 'other', true);
+                // 简单的判断，如果是图片链接
+                addMessage(`<img src="${stickerUrl}" style="max-width: 120px; border-radius: 8px;">`, 'other', true);
             }, 600);
         }
 
         if (extraMessage) {
-            setTimeout(() => addMessage(extraMessage, 'other'), 400);
+            setTimeout(() => {
+                addMessage(extraMessage, 'other');
+            }, 400);
         }
 
-        sendNotification(config.profile.text.split('·')[0], isSticker ? "[图片]" : finalHtml);
-    }
-
-    function updateStatus() {
-        const rand = Math.random() * 100;
-        let selectedGroup = config.statusGroups[0];
-        if (rand > 70) selectedGroup = config.statusGroups[1];
-        
-        const randomStatus = selectedGroup.texts[Math.floor(Math.random() * selectedGroup.texts.length)];
-        document.getElementById('status-bar').style.display = 'block';
-        document.getElementById('status-bar').innerText = `当前状态：${randomStatus}`;
+        sendNotification(config.profile.nickname, finalText);
     }
 
     function makeCall() {
@@ -510,79 +555,64 @@
         if (isHangup) {
             addMessage(`<div class="divider-card">[通话已挂断] 嘟...嘟...</div>`, 'other', true);
         } else {
-            addMessage(`<div class="divider-card">[通话中] ${config.profile.text.split('·')[0]}: 喂？怎么了？</div>`, 'other', true);
+            addMessage(`<div class="divider-card" style="color: var(--primary-color);">[通话中] ${config.profile.nickname}: 喂？怎么了？</div>`, 'other', true);
         }
     }
 
-    // ================= 界面控制与面板逻辑 =================
-    function togglePanel(panelId) {
-        const panel = document.getElementById(panelId);
+    // ================= 设置与系统功能 =================
+    function toggleSettings() {
+        const panel = document.getElementById('settings-panel');
         panel.classList.toggle('active');
-        
-        if (panelId === 'panel-settings') {
-            // 打开设置时，同步一下当前的资料
-            document.getElementById('edit-profile-text').value = config.profile.text;
-            document.getElementById('edit-avatar-url').value = config.profile.avatarUrl;
-        } else if (panelId === 'panel-cards') {
-            // 打开字卡时，将数据加载到文本框。将字卡和表情合并显示
-            const allCards = [...config.wordCards, ...config.stickerCards];
-            document.getElementById('card-textarea').value = allCards.join('\n');
+        if(panel.classList.contains('active')){
+            loadSettingsUI();
         }
     }
 
-    // 保存资料
+    function switchTab(tabId, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function loadSettingsUI() {
+        document.getElementById('profile-nickname').value = config.profile.nickname;
+        document.getElementById('profile-avatar').value = config.profile.avatar;
+        document.getElementById('profile-status').value = config.profile.headerSub;
+        document.getElementById('textarea-words').value = config.wordCards.join('\n');
+        document.getElementById('textarea-stickers').value = config.stickerCards.join('\n');
+        document.getElementById('toggle-mixed-emoji').checked = config.isMixedMode;
+    }
+
     function saveProfile() {
-        config.profile.text = document.getElementById('edit-profile-text').value.trim() || "Nova";
-        config.profile.avatarUrl = document.getElementById('edit-avatar-url').value.trim() || defaultConfig.profile.avatarUrl;
+        config.profile.nickname = document.getElementById('profile-nickname').value || "Nova";
+        config.profile.avatar = document.getElementById('profile-avatar').value.trim();
+        config.profile.headerSub = document.getElementById('profile-status').value || "人的一生，会有太多个雨季";
         
-        // 更新初始卡片
-        document.getElementById('initial-profile').innerText = `>>${config.profile.text}`;
-        
-        saveToLocal();
-        alert("资料已保存！");
+        document.getElementById('header-sub-text').innerText = config.profile.headerSub;
+        saveConfig();
+        renderChat(); // 重新渲染首屏卡片
+        alert('资料已保存！');
     }
 
-    // 保存字卡库
     function saveCards() {
-        const rawText = document.getElementById('card-textarea').value;
-        const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== '');
+        const words = document.getElementById('textarea-words').value.split('\n').filter(w => w.trim() !== '');
+        const stickers = document.getElementById('textarea-stickers').value.split('\n').filter(s => s.trim() !== '');
         
-        // 自动识别 http 开头的为图片（表情包），其余为文本
-        const newWords = [];
-        const newStickers = [];
+        config.wordCards = words.length > 0 ? words : defaultConfig.wordCards;
+        config.stickerCards = stickers;
         
-        lines.forEach(line => {
-            if (line.startsWith('http://') || line.startsWith('https://')) {
-                newStickers.push(line);
-            } else {
-                newWords.push(line);
-            }
-        });
-
-        config.wordCards = newWords;
-        config.stickerCards = newStickers;
-        saveToLocal();
-        alert(`字卡保存成功！\n文本：${newWords.length} 条\n图片：${newStickers.length} 条`);
-        togglePanel('panel-cards');
+        saveConfig();
+        alert('字卡库已更新！');
     }
 
-    // 恢复默认字卡
-    function resetCards() {
-        if(confirm("确定要恢复默认字卡库吗？你添加的字卡会丢失！")) {
-            config.wordCards = [...defaultConfig.wordCards];
-            config.stickerCards = [...defaultConfig.stickerCards];
-            saveToLocal();
-            
-            const allCards = [...config.wordCards, ...config.stickerCards];
-            document.getElementById('card-textarea').value = allCards.join('\n');
-            alert("已恢复默认。");
-        }
+    function saveConfig() {
+        localStorage.setItem('spring_config', JSON.stringify(config));
     }
 
-    // 音频与通知
     function toggleAudio(isChecked) {
         if (isChecked) {
-            bgAudio.play().catch(e => alert("请先与页面交互一次再开启音频"));
+            bgAudio.play().catch(e => alert("浏览器拦截了自动播放，请在页面上随意点一下再开启"));
         } else {
             bgAudio.pause();
         }
@@ -590,7 +620,10 @@
 
     function requestNotification(isChecked) {
         if (isChecked) {
-            if (!("Notification" in window)) return alert("当前浏览器不支持通知");
+            if (!("Notification" in window)) {
+                alert("当前浏览器不支持通知");
+                return;
+            }
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     new Notification("Spring 通知测试", { body: "通知功能已成功开启！" });
@@ -603,15 +636,15 @@
 
     function sendNotification(title, body) {
         if (Notification.permission === "granted") {
-            new Notification(title, { body: body, icon: config.profile.avatarUrl });
+            new Notification(title, { body: body });
         }
     }
 
-    // 备份与恢复
+    // 备份与恢复 (包含聊天和设置)
     function backupData() {
         const data = {
-            config: config,
-            chatHtml: chatContainer.innerHTML // 把聊天记录也存下来
+            chat: chatContainer.innerHTML,
+            config: config
         };
         const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -629,16 +662,17 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
+                if (data.chat) {
+                    localStorage.setItem('spring_chat', data.chat);
+                }
                 if (data.config) {
                     config = data.config;
-                    saveToLocal();
+                    saveConfig();
+                    loadSettingsUI();
+                    document.getElementById('header-sub-text').innerText = config.profile.headerSub;
                 }
-                if (data.chatHtml) {
-                    chatContainer.innerHTML = data.chatHtml;
-                    scrollToBottom();
-                }
-                alert("数据恢复成功！");
-                togglePanel('panel-settings');
+                alert("数据恢复成功！即将刷新页面。");
+                location.reload();
             } catch (err) {
                 alert("文件损坏，无法恢复");
             }
@@ -648,12 +682,18 @@
 
     // 初始化
     window.onload = function() {
-        // 同步界面上的初始资料
-        document.getElementById('initial-profile').innerText = `>>${config.profile.text}`;
-        // 设置混合模式状态
+        document.getElementById('header-sub-text').innerText = config.profile.headerSub;
+        
+        // 渲染聊天记录
+        renderChat();
+        
+        // 确保开启混合模式的状态
         document.getElementById('toggle-mixed-emoji').checked = config.isMixedMode;
+        document.getElementById('toggle-mixed-emoji').addEventListener('change', (e) => {
+            config.isMixedMode = e.target.checked;
+            saveConfig();
+        });
     };
 </script>
-
 </body>
 </html>
