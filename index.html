@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>梦向传讯</title>
   <style>
     :root{
@@ -38,7 +36,6 @@
     
     .main{min-width:0;padding:34px clamp(18px,4vw,52px) 48px;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
     .directory-link{display:none}
-    .field input[type=color]{width:58px;height:38px;padding:3px;border:1px solid var(--line);background:#fff}
     .topline{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:12px}
     .eyebrow{font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
     .page{display:none;animation:fade .25s ease}
@@ -179,19 +176,18 @@
     .file-label input{display:none}
     .sticker{max-width:150px;max-height:150px;object-fit:contain}
 
-    /* iPhone / 移动端全面适配 */
     /* ================= 移动端全面适配 ================= */
     @media(max-width: 700px) {
       .app{display:block;height:100vh;height:100dvh;overflow:hidden;}
       .side{display:none}
       .directory-link{display:inline-block}
       
+      /* 主页样式 */
       .main{
         width:100%; height:100vh; height:100dvh; min-height:0; 
         padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 18px);
         overflow-y:auto; overscroll-behavior:contain; display:block;
       }
-      
       .topline{gap:8px; min-height:36px; padding-bottom:9px;}
       .topline #crumb{flex:1; text-align:center; font-size:9px}
       
@@ -262,7 +258,11 @@
     <div class="side-bottom">— PRIVATE RECORDS<br>仅保存在此设备的浏览器中。<br><span id="sideDate"></span></div>
   </aside>
   <main class="main">
-    <div class="topline"><button class="btn small directory-link" data-page="home">‹ 目录</button><span id="crumb">PERSONAL ARCHIVE / HOME</span><span id="clock">LOCAL TIME</span></div>
+    <div class="topline">
+      <button class="btn small directory-link" data-page="home">‹ 目录</button>
+      <span id="crumb">PERSONAL ARCHIVE / HOME</span>
+      <span id="clock">LOCAL TIME</span>
+    </div>
     
     <section class="page active" id="page-home">
       <div class="eyebrow" style="margin-top:28px">A SMALL WORLD, BETWEEN US</div>
@@ -286,7 +286,13 @@
     <section class="page" id="page-chat">
       <div class="section-head chat-intro"><div><div class="eyebrow">MESSAGES / 001</div><h2 style="margin-top:10px">传讯</h2><p>有些回应，来自字句之间的随机相遇。</p></div></div>
       <div class="chat-shell">
-        <div class="chat-head"><button class="btn small chat-back" id="chatBack" aria-label="返回目录">‹</button><div class="avatar" id="chatOtherAvatar">TA</div><div class="grow"><strong id="chatOtherName">对方</strong><small id="chatStatus">在线 · 等待消息</small></div><button class="btn small" id="callUser" aria-label="发起通话">电话</button><button class="btn small" id="chatInfo">资料</button></div>
+        <div class="chat-head">
+          <button class="btn small chat-back" id="chatBack" aria-label="返回目录">‹</button>
+          <div class="avatar" id="chatOtherAvatar">TA</div>
+          <div class="grow"><strong id="chatOtherName">对方</strong><small id="chatStatus">在线 · 等待消息</small></div>
+          <button class="btn small" id="callUser" aria-label="发起通话">电话</button>
+          <button class="btn small" id="chatInfo">资料</button>
+        </div>
         <div class="chat-log" id="chatLog"></div>
         <div class="chat-compose"><button class="btn small" id="attachImage" title="发送图片">＋</button><input id="messageInput" placeholder="输入消息……" autocomplete="off"><button class="btn small" id="sendMessage">发送</button></div>
       </div>
@@ -361,7 +367,6 @@
       replyChance:1, replyMin:0, replyMax:2, active:false, activeMin:5, activeMax:120, activeLetters:true,
       proactiveCall:true, notifications:false, notifyMessages:true, notifyCalls:true, notifyLetters:true,
       sound:false, theme:'paper', customColor:'#292927', mixedEmoji:true, replyProbability:1, backgroundAudio:false,
-      // 移除了原本容易报错的网易云跨域外链
       audioUrl:'', mailMin:1, mailMax:48, mailCardsMin:3, mailCardsMax:10
     },
     profiles:{
@@ -393,11 +398,7 @@
   });
 
   let state;
-  try {
-    state = JSON.parse(localStorage.getItem(KEY)) || defaults();
-  } catch(e) {
-    state = defaults();
-  }
+  try { state = JSON.parse(localStorage.getItem(KEY)) || defaults(); } catch(e) { state = defaults(); }
   
   // 保证旧数据兼容
   state.settings = Object.assign(defaults().settings, state.settings || {});
@@ -408,11 +409,7 @@
   if(!state.diary) state.diary = {};
 
   function save(){
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-    } catch(e) {
-      notify('保存失败：可能是图片占用了过多本地空间，请使用较小图片或导出备份。');
-    }
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) { notify('保存失败：可能是图片占用了过多本地空间，请使用较小图片或导出备份。'); }
   }
 
   function notify(s){
@@ -436,9 +433,7 @@
     const blob = new Blob([data],{type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    a.href = url; a.download = filename; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
@@ -448,16 +443,17 @@
     $('#modalBackdrop').classList.add('open');
   }
   
-  function closeModal(){
-    $('#modalBackdrop').classList.remove('open');
-  }
+  function closeModal(){ $('#modalBackdrop').classList.remove('open'); }
 
+  // ==========================================
+  // 核心修复：增加页面状态的切换逻辑
+  // ==========================================
   function nav(page){
     $$('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+page));
     $$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
     document.body.classList.toggle('chat-open',page==='chat');
     document.body.classList.toggle('show-home',page==='home'); // 新增：区分首页和子页面
-    // ... 后面不变 ...
+    
     const names={home:'HOME',chat:'MESSAGES',letters:'LETTERS',diary:'DIARY',profile:'PROFILES',cards:'CARD ARCHIVE',settings:'PREFERENCES'};
     $('#crumb').textContent = 'PERSONAL ARCHIVE / ' + (names[page]||page).toUpperCase();
     
@@ -548,15 +544,11 @@
     $('#quoteMsg').onclick = ()=>{
       state.quoteDraft = m.text || '[图片]';
       $('#messageInput').placeholder = '引用：' + state.quoteDraft.slice(0,30);
-      closeModal();
-      $('#messageInput').focus();
+      closeModal(); $('#messageInput').focus();
     };
     $('#deleteMsg').onclick = ()=>{
       state.messages = state.messages.filter(x=>x.id!==id);
-      save();
-      closeModal();
-      renderChat();
-      notify('消息已删除');
+      save(); closeModal(); renderChat(); notify('消息已删除');
     };
   }
 
@@ -564,9 +556,7 @@
     const m = {id:uid(),from,text:text||'',time:nowISO(),...extra};
     state.messages.push(m);
     if(state.messages.length > 500) state.messages = state.messages.slice(-500);
-    save();
-    renderChat();
-    return m;
+    save(); renderChat(); return m;
   }
 
   function sendMessage(){
@@ -576,12 +566,10 @@
     
     const reply = state.quoteDraft ? state.quoteDraft : null;
     state.quoteDraft = null;
-    input.value = '';
-    input.placeholder = '输入消息……';
+    input.value = ''; input.placeholder = '输入消息……';
     
     pushMessage('user',text,{replyTo:reply});
     
-    // 对方回复计算
     const delay = Math.max(0, Number(state.settings.replyMin)||0)*60000 + Math.random() * (Math.max(0,(Number(state.settings.replyMax)||0)-(Number(state.settings.replyMin)||0))*60000);
     state.replyTimer = setTimeout(()=>{
       if(Math.random() <= Number(state.settings.replyChance)) generateReply();
@@ -626,8 +614,7 @@
 
   function renderMails(){
     const list = $('#mailList'), detail = $('#mailDetail');
-    detail.style.display = 'none';
-    list.style.display = 'block';
+    detail.style.display = 'none'; list.style.display = 'block';
     $$('#mailTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.mailTab));
     
     let mails = state.mails.filter(m=>state.mailTab==='inbox'?m.direction==='in'&&m.starred!==true:state.mailTab==='starred'?m.starred:m.direction==='out');
@@ -698,15 +685,10 @@
         time: nowISO(), starred: false, replied: false,
         replyDue: Date.now() + (Number(state.settings.mailMin)||1)*3600000 + Math.random() * ((Number(state.settings.mailMax)||48)-(Number(state.settings.mailMin)||1))*3600000
       };
-      state.mails.push(m);
-      save();
-      closeModal();
-      renderMails();
-      notify('信件已寄出');
+      state.mails.push(m); save(); closeModal(); renderMails(); notify('信件已寄出');
     };
   }
 
-  // 处理回信
   function checkMailReplies(){
     const now = Date.now();
     state.mails.forEach(m=>{
@@ -717,9 +699,7 @@
         let pool = state.cards.filter(c=>c.type==='text' && c.text);
         if(!pool.length){ m.replyText = '（字卡库为空，暂时没有生成回信。）'; return; }
         m.replyText = Array.from({length:n},()=>pool[Math.floor(Math.random()*pool.length)].text).join('\n\n');
-        state.mails.push({
-          id: uid(), direction: 'in', subject: 'Re: '+m.subject, body: m.replyText, time: nowISO(), starred: false, replyTo: m.id
-        });
+        state.mails.push({ id: uid(), direction: 'in', subject: 'Re: '+m.subject, body: m.replyText, time: nowISO(), starred: false, replyTo: m.id });
         if(state.settings.notifications && state.settings.notifyLetters) notify('你收到了一封新回信。');
       }
     });
@@ -744,8 +724,7 @@
     }
     $('#calendar').innerHTML = h;
     $$('[data-day]').forEach(b=>b.onclick=()=>{ state.selectedDate = b.dataset.day; save(); renderDiary(); });
-    renderDiaryEditor();
-    renderDiaryRecent();
+    renderDiaryEditor(); renderDiaryRecent();
   }
 
   function renderDiaryEditor(){
@@ -964,7 +943,6 @@
     notify('完整备份已导出');
   }
 
-  // 设置弹窗逻辑
   function settingModal(which){
     if(which==='title'){
       openModal('首页标题',`
@@ -1129,16 +1107,12 @@
   
   function stopAudio(){ if(audio){ audio.pause(); audio=null; } }
 
-  // 主动发消息逻辑
   function scheduleProactive(){
     clearTimeout(window.proactiveTimer);
     if(!state.settings.active) return;
     const min = Math.max(5, Number(state.settings.activeMin)||5), max = Math.max(min, Number(state.settings.activeMax)||120);
     window.proactiveTimer = setTimeout(()=>{
-      if(state.settings.active){
-        generateProactive();
-        scheduleProactive();
-      }
+      if(state.settings.active){ generateProactive(); scheduleProactive(); }
     }, (min + Math.random()*(max-min))*60000);
     scheduleProactiveMail();
   }
@@ -1147,10 +1121,7 @@
     clearTimeout(window.proactiveMailTimer);
     if(state.settings.activeLetters === false) return;
     window.proactiveMailTimer = setTimeout(()=>{
-      if(state.settings.activeLetters !== false){
-        generateProactiveMail();
-        scheduleProactiveMail();
-      }
+      if(state.settings.activeLetters !== false){ generateProactiveMail(); scheduleProactiveMail(); }
     }, (45 + Math.random()*135)*60000);
   }
 
@@ -1169,7 +1140,6 @@
     return true;
   }
 
-  // 离线补算
   function catchUpOffline(){
     const now = Date.now();
     const last = Number(state.lastVisitAt) || now;
