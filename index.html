@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Letter from Spring</title>
+    
+    <!-- 图标配置 (请确保同目录下有 icon.png) -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Spring","short_name":"Spring","start_url":"/","display":"standalone","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"}]}'>
+
     <style>
-        /* ========== 基础与色彩 (清新文艺风) ========== */
+        /* ========== 基础与色彩 ========== */
         :root {
             --bg-color: #fbfbfb;
-            --primary-color: #a3b899; /* 浅草绿 */
+            --primary-color: #a3b899;
             --text-color: #333333;
             --text-light: #888888;
             --line-color: #e0e0e0;
@@ -28,7 +34,6 @@
             color: var(--text-color);
         }
 
-        /* 手机屏幕容器 (9:16 适配 1206x2622) */
         #app {
             width: 100vw;
             height: 100vh;
@@ -49,18 +54,16 @@
             border-bottom: 1px solid var(--line-color);
             background: #fff;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        header h1 { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
+        header h1 { font-size: 16px; font-weight: normal; letter-spacing: 1px; margin: 0 auto; }
         header h1 span { color: var(--primary-color); }
-        .header-sub { font-size: 11px; color: var(--text-light); margin-top: 5px; }
-        .settings-btn {
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            font-size: 20px;
-            color: var(--text-light);
-            cursor: pointer;
-        }
+        .header-left, .header-right { width: 30px; text-align: left; font-size: 20px; cursor: pointer; }
+        .header-right { text-align: right; }
+        
+        #status-bar { font-size: 11px; color: var(--primary-color); text-align: center; padding: 5px; background: #fff; border-bottom: 1px solid var(--line-color); display: none; }
 
         /* ========== 聊天记录区 ========== */
         #chat-container {
@@ -69,13 +72,34 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
             scroll-behavior: smooth;
         }
 
-        .message { max-width: 80%; display: flex; flex-direction: column; }
-        .message.other { align-self: flex-start; }
-        .message.me { align-self: flex-end; align-items: flex-end; }
+        .message-row {
+            display: flex;
+            width: 100%;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .message-row.me { flex-direction: row-reverse; }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            flex-shrink: 0;
+            object-fit: cover;
+            border: 1px solid var(--line-color);
+        }
+
+        .msg-content {
+            max-width: 75%;
+            display: flex;
+            flex-direction: column;
+        }
+        .message-row.me .msg-content { align-items: flex-end; }
 
         .msg-bubble {
             padding: 10px 14px;
@@ -83,16 +107,17 @@
             font-size: 14px;
             line-height: 1.5;
             word-wrap: break-word;
+            position: relative;
         }
-        .message.other .msg-bubble { background: var(--msg-bg-other); border-top-left-radius: 2px; }
-        .message.me .msg-bubble { background: var(--msg-bg-me); border-top-right-radius: 2px; }
+        .message-row.other .msg-bubble { background: var(--msg-bg-other); border-top-left-radius: 2px; }
+        .message-row.me .msg-bubble { background: var(--msg-bg-me); border-top-right-radius: 2px; }
 
         .msg-time { font-size: 10px; color: var(--text-light); margin-top: 4px; }
 
         /* 拍一拍特效 */
-        .pat-text { font-size: 12px; color: var(--text-light); text-align: center; width: 100%; margin: 10px 0; font-style: italic; }
+        .pat-text { font-size: 12px; color: var(--text-light); text-align: center; width: 100%; margin: 5px 0; font-style: italic; }
 
-        /* 卡片式分割线 (还原图片) */
+        /* 卡片式分割线 */
         .divider-card {
             border: 1px solid var(--line-color);
             border-radius: 4px;
@@ -136,77 +161,77 @@
         .action-btns { display: flex; gap: 8px; }
         .action-btns button { background: #fff; border: 1px solid var(--line-color); color: var(--text-light); padding: 8px 10px; }
 
-        /* ========== 设置面板 (弹窗) ========== */
-        #settings-panel {
+        /* ========== 弹窗面板通用 ========== */
+        .panel {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.95);
+            background: var(--bg-color);
             z-index: 100;
             display: none;
             flex-direction: column;
-            padding: 20px;
             overflow-y: auto;
         }
-        #settings-panel.active { display: flex; }
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px dashed var(--line-color);
-            font-size: 14px;
+        .panel.active { display: flex; }
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid var(--line-color); background: #fff; position: sticky; top: 0; z-index: 2;
         }
-        /* 开关样式 */
+        .panel-header h2 { font-size: 16px; font-weight: normal; }
+        .panel-body { padding: 15px; }
+
+        /* 设置项样式 */
+        .setting-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 0; border-bottom: 1px dashed var(--line-color); font-size: 14px;
+        }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
-        .close-btn { margin-top: 20px; text-align: center; padding: 10px; background: var(--primary-color); color: #fff; border-radius: 4px; cursor: pointer; }
+        
+        /* 按钮样式 */
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; padding: 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; text-align: center; font-size: 14px; }
+        .btn-primary { background: var(--primary-color); color: #fff; border: none; }
 
-        /* 隐藏的音频 */
+        /* 文本域 */
+        textarea {
+            width: 100%; padding: 10px; border: 1px solid var(--line-color); border-radius: 4px;
+            font-size: 14px; font-family: inherit; resize: vertical; min-height: 150px; margin-top: 10px;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--line-color); border-radius: 4px; }
+
+        /* 隐藏音频 */
         #bg-audio { display: none; }
-
-        /* 状态显示 */
-        #status-bar { font-size: 11px; color: var(--primary-color); text-align: center; padding: 5px; background: #fff; border-bottom: 1px solid var(--line-color); display: none; }
     </style>
-<!-- 网站标题 -->
-    <title>Letter from Spring</title>
-    
-    <!-- ====== 添加下面这几行代码 ====== -->
-    <!-- 标准网页图标 (适用于浏览器标签页) -->
-    <link rel="icon" type="image/png" href="icon.png">
-    
-    <!-- 苹果设备 (iOS) 添加到主屏幕的图标 -->
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
 
 <div id="app">
     <!-- 顶部 -->
     <header>
+        <div class="header-left" onclick="togglePanel('panel-cards')" title="字卡库">📚</div>
         <h1>- Letter from <span>Spring</span> -</h1>
-        <div class="header-sub">人的一生，会有太多个雨季</div>
-        <div class="settings-btn" onclick="toggleSettings()">⚙️</div>
+        <div class="header-right" onclick="togglePanel('panel-settings')" title="设置">⚙️</div>
     </header>
     <div id="status-bar"></div>
 
     <!-- 聊天区 -->
     <div id="chat-container">
-        <!-- 初始卡片 -->
+        <!-- 初始卡片 (头像随资料变动) -->
         <div class="divider-card">
             <div class="highlight">- Letter from Spring -</div>
-            <div style="margin-top: 10px;">>>Nova·17·ENFP·火象狮子</div>
+            <div style="margin-top: 10px;" id="initial-profile">>>Nova·17·ENFP·火象狮子</div>
             <div style="margin-top: 15px; font-size: 12px; border-left: 2px solid var(--primary-color); padding-left: 8px; text-align: left;">
                 J:<br>
                 一度ほどけた糸は<br>
                 どんなに必死に戻そうとしても<br>
                 元のように結び直すことは困難である
             </div>
-        </div>
-        <div class="divider-card">
-            >>虐恋风格·温病·引导·剖析·涉三
         </div>
     </div>
 
@@ -220,50 +245,86 @@
         <button onclick="sendMessage()">发送</button>
     </footer>
 
-    <!-- 设置面板 -->
-    <div id="settings-panel">
-        <h2 style="font-size: 18px; margin-bottom: 20px; font-weight: normal;">设置</h2>
-        <div class="setting-item">
-            <span>后台挂活 (音频)</span>
-            <label class="switch">
-                <input type="checkbox" id="toggle-bg-audio" onchange="toggleAudio(this.checked)">
-                <span class="slider"></span>
-            </label>
+    <!-- ================= 设置面板 ================= -->
+    <div id="panel-settings" class="panel">
+        <div class="panel-header">
+            <span style="width:20px;"></span>
+            <h2>设置</h2>
+            <span style="cursor:pointer; font-size: 20px;" onclick="togglePanel('panel-settings')">×</span>
         </div>
-        <div class="setting-item">
-            <span>弹窗通知开关</span>
-            <label class="switch">
-                <input type="checkbox" id="toggle-notification" onchange="requestNotification(this.checked)">
-                <span class="slider"></span>
-            </label>
-        </div>
-        <div class="setting-item">
-            <span>混合模式 (Emoji与文字拼接)</span>
-            <label class="switch">
-                <input type="checkbox" id="toggle-mixed-emoji" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-        <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
-            <span>数据备份与恢复</span>
-            <div style="margin-top: 10px; display: flex; gap: 10px; width: 100%;">
-                <button onclick="backupData()" style="flex:1; padding:10px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;">导出备份</button>
-                <input type="file" id="restore-file" accept=".json" onchange="restoreData(event)" style="display: none;">
-                <button onclick="document.getElementById('restore-file').click()" style="flex:1; padding:10px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer;">导入备份</button>
+        <div class="panel-body">
+            <!-- 资料设置 -->
+            <h3 style="font-size: 15px; margin-bottom: 10px; color: var(--primary-color);">对方资料</h3>
+            <div class="form-group">
+                <label>名字 / 简介</label>
+                <input type="text" id="edit-profile-text" value="Nova·17·ENFP·火象狮子">
+            </div>
+            <div class="form-group">
+                <label>头像图片链接 (URL)</label>
+                <input type="text" id="edit-avatar-url" value="https://api.iconify.design/noto:leaf-fluttering-in-wind.svg" placeholder="输入图片URL (http...)">
+            </div>
+            <div class="btn-group" style="margin-bottom: 20px;">
+                <div class="btn btn-primary" onclick="saveProfile()">保存资料</div>
+            </div>
+
+            <!-- 系统设置 -->
+            <h3 style="font-size: 15px; margin-bottom: 10px; color: var(--primary-color); border-top: 1px dashed #eee; padding-top: 15px;">系统设置</h3>
+            <div class="setting-item">
+                <span>后台挂活 (音频)</span>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-bg-audio" onchange="toggleAudio(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>弹窗通知开关</span>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-notification" onchange="requestNotification(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>混合模式 (Emoji与文字拼接)</span>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-mixed-emoji" checked onchange="config.isMixedMode = this.checked">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>数据备份与恢复</span>
+                <div style="display:flex; gap:10px;">
+                    <div class="btn" style="padding:5px 10px; font-size:12px;" onclick="backupData()">导出</div>
+                    <input type="file" id="restore-file" accept=".json" onchange="restoreData(event)" style="display: none;">
+                    <div class="btn" style="padding:5px 10px; font-size:12px;" onclick="document.getElementById('restore-file').click()">导入</div>
+                </div>
             </div>
         </div>
-        <div class="close-btn" onclick="toggleSettings()">完成</div>
     </div>
 
-    <!-- 后台音频 (外链网易云) -->
+    <!-- ================= 字卡库管理面板 ================= -->
+    <div id="panel-cards" class="panel">
+        <div class="panel-header">
+            <span style="width:20px;"></span>
+            <h2>字卡库管理</h2>
+            <span style="cursor:pointer; font-size: 20px;" onclick="togglePanel('panel-cards')">×</span>
+        </div>
+        <div class="panel-body">
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">每行一条，支持纯文本。如果填的是图片链接(http开头)，会自动识别为表情包。</p>
+            <textarea id="card-textarea" placeholder="在这里输入字卡..."></textarea>
+            <div class="btn-group" style="margin-top: 15px;">
+                <div class="btn btn-primary" onclick="saveCards()">保存字卡库</div>
+                <div class="btn" onclick="resetCards()">恢复默认</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 后台音频 -->
     <audio id="bg-audio" src="https://music.163.com/song/media/outer/url?id=40249284.mp3" loop></audio>
 </div>
 
 <script>
-    // ================= 数据与配置区 (字卡库) =================
-    // 你可以在这里无限添加你的句子、表情包URL、Emoji和状态
-    const config = {
-        // 字卡库 (随机组合)
+    // ================= 数据与配置区 =================
+    const defaultConfig = {
         wordCards: [
             "今天下雨了，空气里都是泥土的香气。",
             "我看着窗外的雨滴，突然很想见你。",
@@ -274,83 +335,94 @@
             "其实我不喜欢雨天，但如果是和你一起，那就没关系。",
             "晚安，明天也要好好吃饭。"
         ],
-        // 表情包URL库 (为空则不会触发)
         stickerCards: [
             "https://api.iconify.design/noto:umbrella.svg",
             "https://api.iconify.design/noto:leaf-fluttering-in-wind.svg"
         ],
-        // Emoji库
         emojiCards: ["🌱", "🌧️", "🍃", "☕", "💭", "🌙"],
-        // 状态库 (带分组权重 - 模拟)
         statusGroups: [
             { weight: 70, texts: ["正在听歌", "望着窗外发呆", "阅读中", "整理书桌"] },
             { weight: 30, texts: ["心情有些低落", "在雨中散步", "思考一些事情"] }
         ],
-        // 心情库 (mood)
         moods: ["平静", "微郁", "雀跃", "慵懒", "心动"],
-        // 当前状态
-        currentStatus: "",
+        profile: {
+            text: "Nova·17·ENFP·火象狮子",
+            avatarUrl: "https://api.iconify.design/noto:leaf-fluttering-in-wind.svg"
+        },
         isMixedMode: true
     };
+
+    // 尝试从本地存储加载配置，如果没有则使用默认
+    let config = JSON.parse(localStorage.getItem('spring_config')) || JSON.parse(JSON.stringify(defaultConfig));
+
+    // 当前用户在字卡库面板编辑的实际数据（拆分字卡和表情）
+    let currentWords = [...config.wordCards];
+    let currentStickers = [...config.stickerCards];
 
     // ================= 核心逻辑 =================
     const chatContainer = document.getElementById('chat-container');
     const bgAudio = document.getElementById('bg-audio');
 
-    // 获取当前时间
+    function saveToLocal() {
+        localStorage.setItem('spring_config', JSON.stringify(config));
+    }
+
     function getCurrentTime() {
         const now = new Date();
         return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     }
 
-    // 滚动到底部
     function scrollToBottom() {
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // 发送用户消息
+    // 渲染一条带头像的消息
+    function addMessage(text, type, isHtml = false) {
+        const row = document.createElement('div');
+        row.className = `message-row ${type}`;
+        
+        // 头像
+        const avatar = document.createElement('img');
+        avatar.className = 'avatar';
+        // 如果对方，用 config.profile.avatarUrl。如果是自己，用一个空白或者默认头像
+        avatar.src = type === 'other' ? config.profile.avatarUrl : "https://api.iconify.design/noto:person.svg"; 
+        
+        // 内容容器
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'msg-content';
+
+        let bubbleContent = text;
+        if (!isHtml) {
+            bubbleContent = `<div class="msg-bubble">${text}</div>`;
+        }
+        
+        contentDiv.innerHTML = `${bubbleContent}<div class="msg-time">${getCurrentTime()}</div>`;
+        
+        row.appendChild(avatar);
+        row.appendChild(contentDiv);
+        chatContainer.appendChild(row);
+        scrollToBottom();
+    }
+
     function sendMessage() {
         const input = document.getElementById('user-input');
         const text = input.value.trim();
         if (!text) return;
-
         addMessage(text, 'me');
         input.value = '';
-
-        // 用户发消息后，模拟对方回复
-        setTimeout(() => {
-            triggerReply();
-        }, 1000 + Math.random() * 1500);
+        setTimeout(() => triggerReply(), 1000 + Math.random() * 1500);
     }
 
     function handleEnter(e) {
         if (e.key === 'Enter') sendMessage();
     }
 
-    // 添加消息到界面
-    function addMessage(text, type, isHtml = false) {
-        const div = document.createElement('div');
-        div.className = `message ${type}`;
-        
-        let htmlContent = text;
-        if (!isHtml) {
-            htmlContent = `<div class="msg-bubble">${text}</div>`;
-        }
-        
-        div.innerHTML = `${htmlContent}<div class="msg-time">${getCurrentTime()}</div>`;
-        chatContainer.appendChild(div);
-        scrollToBottom();
-    }
-
-    // ================= 概率与核心算法 =================
-    // ② 拍一拍 (3%)
+    // ================= 概率与随机逻辑 =================
     function triggerPat() {
-        addMessage(`<div class="pat-text">“你” 拍了拍 “Nova” 的肩膀</div>`, 'other', true);
-        // 发送通知
-        sendNotification("Nova", "拍了拍你");
+        addMessage(`<div class="pat-text">“你” 拍了拍 “${config.profile.text.split('·')[0]}” 的肩膀</div>`, 'other', true);
+        sendNotification(config.profile.text.split('·')[0], "拍了拍你");
     }
 
-    // ③ 发几条字卡 (1条:75%, 2条:20%, 3条:5%)
     function triggerReply() {
         const rand = Math.random();
         let count = 1;
@@ -358,146 +430,169 @@
         else if (rand < 0.95) count = 2;
         else count = 3;
 
-        // 对方状态更新
         updateStatus();
 
-        // 连续发送多条
         let delay = 0;
         for (let i = 0; i < count; i++) {
-            setTimeout(() => {
-                sendCard();
-            }, delay);
-            delay += 800 + Math.random() * 500; // 每条间隔
+            setTimeout(() => sendCard(), delay);
+            delay += 800 + Math.random() * 500;
         }
     }
 
-    // 发送单条字卡 (包含概率判定)
     function sendCard() {
-        const randomSentence = config.wordCards[Math.floor(Math.random() * config.wordCards.length)];
-        let finalText = randomSentence;
+        // 如果字卡库为空，不发送
+        if (config.wordCards.length === 0 && config.stickerCards.length === 0) return;
+
+        // 随机决定发文字还是表情包
+        const totalPool = config.wordCards.length + config.stickerCards.length;
+        const randomIndex = Math.floor(Math.random() * totalPool);
+        
+        let textToSend = "";
+        let isSticker = false;
+
+        if (randomIndex < config.wordCards.length) {
+            // 发文字
+            textToSend = config.wordCards[randomIndex];
+        } else {
+            // 发表情
+            textToSend = config.stickerCards[randomIndex - config.wordCards.length];
+            isSticker = true;
+        }
+
+        let finalHtml = textToSend;
         let extraMessage = "";
 
-        // ⑤ 附带 Emoji (20% 概率)
-        if (Math.random() < 0.2 && config.emojiCards.length > 0) {
+        // 如果是文字，判断是否加 Emoji
+        if (!isSticker && Math.random() < 0.2 && config.emojiCards.length > 0) {
             const emoji = config.emojiCards[Math.floor(Math.random() * config.emojiCards.length)];
             if (config.isMixedMode) {
-                // 混合模式 (前后各 50%)
-                if (Math.random() < 0.5) finalText = emoji + finalText;
-                else finalText = finalText + emoji;
+                if (Math.random() < 0.5) finalHtml = emoji + textToSend;
+                else finalHtml = textToSend + emoji;
             } else {
-                // 单独一条 (处理稍后发送)
                 extraMessage = emoji;
             }
         }
 
-        // 渲染文本
-        addMessage(finalText, 'other');
+        // 渲染
+        if (isSticker) {
+            addMessage(`<img src="${textToSend}" style="max-width: 120px; border-radius: 8px; border: 1px solid #eee;">`, 'other', true);
+        } else {
+            addMessage(finalHtml, 'other');
+        }
 
-        // ④ 附带表情包 (20% 概率，独立判断)
-        if (Math.random() < 0.2 && config.stickerCards.length > 0) {
+        // 附带表情包 (原本独立 20% 概率，这里加了限制：如果刚发完表情，就不再紧跟着发表情，免得刷屏)
+        if (!isSticker && Math.random() < 0.2 && config.stickerCards.length > 0) {
             const stickerUrl = config.stickerCards[Math.floor(Math.random() * config.stickerCards.length)];
-            // 延时发图片
             setTimeout(() => {
-                addMessage(`<img src="${stickerUrl}" style="max-width: 100px; border-radius: 8px;">`, 'other', true);
+                addMessage(`<img src="${stickerUrl}" style="max-width: 120px; border-radius: 8px; border: 1px solid #eee;">`, 'other', true);
             }, 600);
         }
 
-        // 如果不是混合模式，发单独 Emoji
         if (extraMessage) {
-            setTimeout(() => {
-                addMessage(extraMessage, 'other');
-            }, 400);
+            setTimeout(() => addMessage(extraMessage, 'other'), 400);
         }
 
-        // 发送通知
-        sendNotification("Nova", finalText);
+        sendNotification(config.profile.text.split('·')[0], isSticker ? "[图片]" : finalHtml);
     }
 
-    // ⑦ 对方状态更新 (1~8 小时)
     function updateStatus() {
-        // 模拟权重选择
         const rand = Math.random() * 100;
-        let selectedGroup = config.statusGroups[0]; // 默认
+        let selectedGroup = config.statusGroups[0];
         if (rand > 70) selectedGroup = config.statusGroups[1];
         
         const randomStatus = selectedGroup.texts[Math.floor(Math.random() * selectedGroup.texts.length)];
-        config.currentStatus = randomStatus;
-        
-        const statusBar = document.getElementById('status-bar');
-        statusBar.style.display = 'block';
-        statusBar.innerText = `当前状态：${randomStatus}`;
-
-        // 真实场景下使用 setInterval，这里为了演示，每触发一次回复就刷新一次
-        // 定时器逻辑：
-        // setTimeout(() => updateStatus(), (1 + Math.random() * 7) * 60 * 60 * 1000);
+        document.getElementById('status-bar').style.display = 'block';
+        document.getElementById('status-bar').innerText = `当前状态：${randomStatus}`;
     }
 
-    // ⑧ 心情日历 (每天首次加载)
-    function initMood() {
-        if (Math.random() < 0.20) {
-            console.log("今日无心情卡片");
-        } else {
-            const mood = config.moods[Math.floor(Math.random() * config.moods.length)];
-            console.log(`今日心情：${mood}`);
-            // 你可以在这里把心情渲染到界面上，例如插入到聊天的第一条。
-            addMessage(`<div class="divider-card" style="text-align:center; padding: 10px;">今日心情：${mood}</div>`, 'other', true);
-        }
-    }
-
-    // ⑨ 电话与拍一拍
     function makeCall() {
-        // 拨打过去，35% 概率被挂断
         const isHangup = Math.random() < 0.35;
         if (isHangup) {
             addMessage(`<div class="divider-card">[通话已挂断] 嘟...嘟...</div>`, 'other', true);
         } else {
-            addMessage(`<div class="divider-card">[通话中] Nova: 喂？怎么了？</div>`, 'other', true);
+            addMessage(`<div class="divider-card">[通话中] ${config.profile.text.split('·')[0]}: 喂？怎么了？</div>`, 'other', true);
         }
     }
 
-    // 随机触发来电 (每15~60分钟)
-    // 为了演示，我把它写成了一个长定时器，真实环境请保留
-    function scheduleIncomingCall() {
-        const interval = (15 + Math.random() * 45) * 60 * 1000; // 15~60分钟
-        setTimeout(() => {
-            if (Math.random() < 0.25) {
-                // 25% 发起来电
-                addMessage(`<div class="divider-card" style="color: var(--primary-color);">📞 来电：Nova 正在呼叫你...</div>`, 'other', true);
-                sendNotification("Nova", "来电呼叫");
-                // 模拟接听/挂断逻辑可以后续补充
-            }
-            scheduleIncomingCall(); // 递归继续下一次
-        }, interval);
-    }
-
-    // 初始化定时器
-    // 如果你要测试电话，可以把上面的时间改为 1000 (1秒)
-
-    // ================= 设置与系统功能 =================
-    function toggleSettings() {
-        const panel = document.getElementById('settings-panel');
+    // ================= 界面控制与面板逻辑 =================
+    function togglePanel(panelId) {
+        const panel = document.getElementById(panelId);
         panel.classList.toggle('active');
+        
+        if (panelId === 'panel-settings') {
+            // 打开设置时，同步一下当前的资料
+            document.getElementById('edit-profile-text').value = config.profile.text;
+            document.getElementById('edit-avatar-url').value = config.profile.avatarUrl;
+        } else if (panelId === 'panel-cards') {
+            // 打开字卡时，将数据加载到文本框。将字卡和表情合并显示
+            const allCards = [...config.wordCards, ...config.stickerCards];
+            document.getElementById('card-textarea').value = allCards.join('\n');
+        }
     }
 
-    // 后台挂活音频
+    // 保存资料
+    function saveProfile() {
+        config.profile.text = document.getElementById('edit-profile-text').value.trim() || "Nova";
+        config.profile.avatarUrl = document.getElementById('edit-avatar-url').value.trim() || defaultConfig.profile.avatarUrl;
+        
+        // 更新初始卡片
+        document.getElementById('initial-profile').innerText = `>>${config.profile.text}`;
+        
+        saveToLocal();
+        alert("资料已保存！");
+    }
+
+    // 保存字卡库
+    function saveCards() {
+        const rawText = document.getElementById('card-textarea').value;
+        const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== '');
+        
+        // 自动识别 http 开头的为图片（表情包），其余为文本
+        const newWords = [];
+        const newStickers = [];
+        
+        lines.forEach(line => {
+            if (line.startsWith('http://') || line.startsWith('https://')) {
+                newStickers.push(line);
+            } else {
+                newWords.push(line);
+            }
+        });
+
+        config.wordCards = newWords;
+        config.stickerCards = newStickers;
+        saveToLocal();
+        alert(`字卡保存成功！\n文本：${newWords.length} 条\n图片：${newStickers.length} 条`);
+        togglePanel('panel-cards');
+    }
+
+    // 恢复默认字卡
+    function resetCards() {
+        if(confirm("确定要恢复默认字卡库吗？你添加的字卡会丢失！")) {
+            config.wordCards = [...defaultConfig.wordCards];
+            config.stickerCards = [...defaultConfig.stickerCards];
+            saveToLocal();
+            
+            const allCards = [...config.wordCards, ...config.stickerCards];
+            document.getElementById('card-textarea').value = allCards.join('\n');
+            alert("已恢复默认。");
+        }
+    }
+
+    // 音频与通知
     function toggleAudio(isChecked) {
         if (isChecked) {
-            bgAudio.play().catch(e => console.log("音频播放被浏览器拦截，请与用户交互后重试"));
+            bgAudio.play().catch(e => alert("请先与页面交互一次再开启音频"));
         } else {
             bgAudio.pause();
         }
     }
 
-    // 弹窗通知
     function requestNotification(isChecked) {
         if (isChecked) {
-            if (!("Notification" in window)) {
-                alert("当前浏览器不支持桌面通知");
-                return;
-            }
+            if (!("Notification" in window)) return alert("当前浏览器不支持通知");
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
-                    // 立即发送一个测试通知
                     new Notification("Spring 通知测试", { body: "通知功能已成功开启！" });
                 } else {
                     document.getElementById('toggle-notification').checked = false;
@@ -508,17 +603,15 @@
 
     function sendNotification(title, body) {
         if (Notification.permission === "granted") {
-            new Notification(title, { body: body, icon: "https://api.iconify.design/noto:leaf-fluttering-in-wind.svg" });
+            new Notification(title, { body: body, icon: config.profile.avatarUrl });
         }
     }
 
     // 备份与恢复
     function backupData() {
-        // 备份聊天记录
-        const messages = chatContainer.innerHTML;
         const data = {
-            messages: messages,
-            config: config
+            config: config,
+            chatHtml: chatContainer.innerHTML // 把聊天记录也存下来
         };
         const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -536,14 +629,16 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-                if (data.messages) {
-                    chatContainer.innerHTML = data.messages;
+                if (data.config) {
+                    config = data.config;
+                    saveToLocal();
+                }
+                if (data.chatHtml) {
+                    chatContainer.innerHTML = data.chatHtml;
                     scrollToBottom();
                 }
-                if (data.config) {
-                    Object.assign(config, data.config);
-                }
                 alert("数据恢复成功！");
+                togglePanel('panel-settings');
             } catch (err) {
                 alert("文件损坏，无法恢复");
             }
@@ -553,14 +648,10 @@
 
     // 初始化
     window.onload = function() {
-        initMood();
-        scheduleIncomingCall();
-        // 混合模式监听
-        document.getElementById('toggle-mixed-emoji').addEventListener('change', (e) => {
-            config.isMixedMode = e.target.checked;
-        });
-        // 初始化状态
-        updateStatus();
+        // 同步界面上的初始资料
+        document.getElementById('initial-profile').innerText = `>>${config.profile.text}`;
+        // 设置混合模式状态
+        document.getElementById('toggle-mixed-emoji').checked = config.isMixedMode;
     };
 </script>
 
